@@ -181,6 +181,7 @@ exports.getAuthenticatedUser = (req, res) => {
 
 exports.addUserDetails = (req, res) => {
   let userDetails = reduceUserDetails(req.body);
+  console.log("REQ USER HANDLE", req.user);
   db.doc(`/users/${req.user.handle}`)
     .update(userDetails)
     .then(() => {
