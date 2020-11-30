@@ -105,9 +105,9 @@ exports.getUserDetails = (req, res) => {
       }
     })
     .then((data) => {
-      userData.status = [];
+      userData.posts = [];
       data.forEach((doc) => {
-        userData.status.push({
+        userData.posts.push({
           body: doc.data().body,
           createdAt: doc.data().createdAt,
           userName: doc.data().userName,

@@ -31,7 +31,7 @@ const {
   editPost,
   editComment,
   deleteComment,
-} = require("./handlers/status");
+} = require("./handlers/posts");
 
 app.post("/signup", signup);
 app.post("/login", login);
