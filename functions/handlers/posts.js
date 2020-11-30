@@ -27,14 +27,14 @@ exports.newPost = (req, res) => {
 };
 
 exports.getPost = (req, res) => {
-  let postData = {};
+  let post = {};
   db.doc(`/posts/${req.params.postId}`)
     .get()
     .then((doc) => {
       !doc.exists && res.status(404).json({ error: "Post not found" });
 
-      postData = doc.data();
-      postData.postId = doc.id;
+      post = doc.data();
+      post.postId = doc.id;
       return db
         .collection("comments")
         .orderBy("createdAt", "desc")
@@ -42,11 +42,36 @@ exports.getPost = (req, res) => {
         .get();
     })
     .then((data) => {
-      postData.comments = [];
+      post.comments = [];
       data.forEach((doc) => {
-        postData.comments.push(doc.data());
+        post.comments.push(doc.data());
       });
-      return res.json(postData);
+      return res.json(post);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: err.code });
+    });
+};
+
+exports.getPosts = (req, res) => {
+  db.collection("posts")
+    .orderBy("createdAt", "desc")
+    .get()
+    .then((data) => {
+      let posts = [];
+      data.forEach((doc) => {
+        posts.push({
+          postId: doc.id,
+          body: doc.data().body,
+          userName: doc.data().userName,
+          createdAt: doc.data().createdAt,
+          commentCount: doc.data().commentCount,
+          likeCount: doc.data().likeCount,
+          imageUrl: doc.data().imageUrl,
+        });
+      });
+      return res.json(posts);
     })
     .catch((err) => {
       console.error(err);
