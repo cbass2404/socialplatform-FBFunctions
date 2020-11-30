@@ -54,3 +54,140 @@ app.patch("/posts/:postId/:commentId", FBAuth, editComment);
 app.delete("/posts/:postId/:commentId", FBAuth, deleteComment);
 
 exports.api = functions.region("us-central1").https.onRequest(app);
+
+exports.createNotificationOnLike = functions
+  .region("us-central1")
+  .firestore.document("likes/{id}")
+  .onCreate((snapshot) => {
+    return db
+      .doc(`/posts/${snapshot.data().postId}`)
+      .get()
+      .then((doc) => {
+        if (doc.exists && doc.data().userName !== snapshot.data().userName) {
+          return db.doc(`/notifications/${snapshot.id}`).set({
+            createdAt: new Date().toISOString(),
+            recipient: doc.data().userName,
+            sender: snapshot.data().userName,
+            type: "like",
+            read: false,
+            postId: doc.id,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  });
+
+exports.deleteNotificationOnUnLike = functions
+  .region("us-central1")
+  .firestore.document("likes/{id}")
+  .onDelete((snapshot) => {
+    return db
+      .doc(`/notifications/${snapshot.id}`)
+      .delete()
+      .catch((err) => {
+        console.error(err);
+      });
+  });
+
+exports.createNotificationOnComment = functions
+  .region("us-central1")
+  .firestore.document("comments/{id}")
+  .onCreate((snapshot) => {
+    return db
+      .doc(`/posts/${snapshot.data().postId}`)
+      .get()
+      .then((doc) => {
+        if (doc.exists && doc.data().userName !== snapshot.data().userName) {
+          return db.doc(`/notifications/${snapshot.id}`).set({
+            createdAt: new Date().toISOString(),
+            recipient: doc.data().userName,
+            sender: snapshot.data().userName,
+            type: "comment",
+            read: false,
+            postId: doc.id,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  });
+
+exports.onUserImageChange = functions
+  .region("us-central1")
+  .firestore.document("/users/{userId}")
+  .onUpdate((change) => {
+    if (change.before.data().imageUrl !== change.after.data().imageUrl) {
+      let batch = db.batch();
+      return db
+        .collection("posts")
+        .where("userName", "==", change.before.data().userName)
+        .get()
+        .then((data) => {
+          data.forEach((doc) => {
+            const post = db.doc(`/posts/${doc.id}`);
+            batch.update(post, { imageUrl: change.after.data().imageUrl });
+          });
+          return batch.commit();
+        });
+    } else return true;
+  });
+
+exports.onPostDelete = functions
+  .region("us-central1")
+  .firestore.document("/posts/{postId}")
+  .onDelete((snapshot, context) => {
+    const postId = context.params.postId;
+    const batch = db.batch();
+    return db
+      .collection("comments")
+      .where("postId", "==", postId)
+      .get()
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/comments/${doc.id}`));
+        });
+        return db.collection("likes").where("postId", "==", postId).get();
+      })
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/likes/${doc.id}`));
+        });
+        return db
+          .collection("notifications")
+          .where("postId", "==", postId)
+          .get();
+      })
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/notifications/${doc.id}`));
+        });
+        return batch.commit();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  });
+
+exports.onUserDelete = functions
+  .region("us-central1")
+  .firestore.document("/users/{userName}")
+  .onDelete((snapshot, context) => {
+    const userName = context.params.userName;
+    const batch = db.batch();
+    return db
+      .collection("posts")
+      .where("userName", "==", userName)
+      .get()
+      .then((data) => {
+        data.forEach((post) => {
+          batch.delete(db.doc(`/posts/${post.postId}`));
+        });
+        return batch.commit();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  });

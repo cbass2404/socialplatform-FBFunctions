@@ -245,9 +245,7 @@ exports.editComment = (req, res) => {
   req.body.body.trim() === "" &&
     res.status(400).json({ comment: "Must not be empty" });
 
-  const document = db.doc(
-    `/posts/${req.params.postId}/${req.params.commentId}`
-  );
+  const document = db.doc(`/comments/${req.params.commentId}`);
   document
     .get()
     .then((doc) => {
@@ -267,9 +265,7 @@ exports.editComment = (req, res) => {
 };
 
 exports.deleteComment = (req, res) => {
-  const document = db.doc(
-    `/posts/${req.params.postId}/${req.params.commentId}`
-  );
+  const document = db.doc(`/comments/${req.params.commentId}`);
   document
     .get()
     .then((doc) => {
