@@ -66,10 +66,9 @@ exports.login = (req, res) => {
     email: req.body.email,
     password: req.body.password,
   };
-
   const { valid, errors } = validateLoginData(user);
 
-  if (!valid) return res.status(400).json(errors);
+  !valid && res.status(400).json(errors);
 
   firebase
     .auth()
@@ -90,6 +89,7 @@ exports.login = (req, res) => {
 
 exports.getUserDetails = (req, res) => {
   let userData = {};
+
   db.doc(`/users/${req.params.userName}`)
     .get()
     .then((doc) => {
@@ -115,6 +115,55 @@ exports.getUserDetails = (req, res) => {
           likeCount: doc.data().likeCount,
           commentCount: doc.data().commentCount,
           postId: doc.id,
+        });
+      });
+      return res.json(userData);
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
+
+exports.getAuthenticatedUser = (req, res) => {
+  let userData = {};
+
+  db.doc(`/users/${req.user.userName}`)
+    .get()
+    .then((doc) => {
+      doc.exists &&
+        ((userData.credentials = doc.data()),
+        db
+          .collection("likes")
+          .where("userName", "==", req.user.userName)
+          .get());
+    })
+    .then((data) => {
+      userData.likes = [];
+
+      data.forEach((doc) => {
+        userData.likes.push(doc.data());
+      });
+
+      return db
+        .collection("notifications")
+        .where("recipient", "==", req.user.userName)
+        .orderBy("createdAt", "desc")
+        .limit(10)
+        .get();
+    })
+    .then((data) => {
+      userData.notifications = [];
+
+      data.forEach((doc) => {
+        userData.notifications.push({
+          recipient: doc.data().recipient,
+          sender: doc.data().sender,
+          createdAt: doc.data().createdAt,
+          postId: doc.data().postId,
+          type: doc.data().type,
+          read: doc.data().read,
+          notificationId: doc.id,
         });
       });
       return res.json(userData);
