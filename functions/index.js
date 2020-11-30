@@ -131,6 +131,9 @@ exports.onUserImageChange = functions
             batch.update(post, { imageUrl: change.after.data().imageUrl });
           });
           return batch.commit();
+        })
+        .then(() => {
+          change.before.data().imageUrl.delete();
         });
     } else return true;
   });
