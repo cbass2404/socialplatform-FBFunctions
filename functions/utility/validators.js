@@ -17,7 +17,7 @@ exports.validateSignupData = (data) => {
   data.password !== data.confirmPassword &&
     (errors.confirmPassword = "Passwords must match");
 
-  isEmpty(data.userName) && (errors.userName = "Must not be empty");
+  isEmpty(data.handle) && (errors.handle = "Must not be empty");
 
   return {
     errors,
@@ -41,15 +41,15 @@ exports.validateLoginData = (data) => {
 exports.reduceUserDetails = (data) => {
   let userDetails = {};
 
-  !isEmpty(data.bio.trim()) && (userDetails.bio = data.bio);
+  if (!isEmpty(data.bio.trim())) userDetails.bio = data.bio;
+
   if (!isEmpty(data.website.trim())) {
     if (data.website.trim().substring(0, 4) !== "http") {
-      return (userDetails.website = `http://${data.website.trim()}`);
-    } else {
-      return (userDetails.website = data.website);
-    }
+      userDetails.website = `http://${data.website.trim()}`;
+    } else userDetails.website = data.website;
   }
-  !isEmpty(data.location.trim()) && (userDetails.location = data.location);
+
+  if (!isEmpty(data.location.trim())) userDetails.location = data.location;
 
   return userDetails;
 };

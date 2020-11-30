@@ -33,12 +33,12 @@ const {
 
 app.post("/signup", signup);
 app.post("/login", login);
-app.get("/user/:userName", getUserDetails);
-app.get("/user", FBAuth, getAuthenticatedUser);
+app.get("/user/:handle", getUserDetails);
+app.get("/user", FBAuth, getAuthenticatedUser); // START CHECK HERE
 app.post("/user", FBAuth, addUserDetails);
 app.post("/user/image", FBAuth, uploadImage);
 app.post("/notifications", FBAuth, markNotificationsRead);
-app.delete("/user/:userName", FBAuth, deleteUser);
+app.delete("/user/:handle", FBAuth, deleteUser);
 
 app.post("/posts", FBAuth, newPost);
 app.get("/posts", getPosts);
@@ -61,11 +61,11 @@ exports.createNotificationOnLike = functions
       .doc(`/posts/${snapshot.data().postId}`)
       .get()
       .then((doc) => {
-        if (doc.exists && doc.data().userName !== snapshot.data().userName) {
+        if (doc.exists && doc.data().handle !== snapshot.data().handle) {
           return db.doc(`/notifications/${snapshot.id}`).set({
             createdAt: new Date().toISOString(),
-            recipient: doc.data().userName,
-            sender: snapshot.data().userName,
+            recipient: doc.data().handle,
+            sender: snapshot.data().handle,
             type: "like",
             read: false,
             postId: doc.id,
@@ -97,11 +97,11 @@ exports.createNotificationOnComment = functions
       .doc(`/posts/${snapshot.data().postId}`)
       .get()
       .then((doc) => {
-        if (doc.exists && doc.data().userName !== snapshot.data().userName) {
+        if (doc.exists && doc.data().handle !== snapshot.data().handle) {
           return db.doc(`/notifications/${snapshot.id}`).set({
             createdAt: new Date().toISOString(),
-            recipient: doc.data().userName,
-            sender: snapshot.data().userName,
+            recipient: doc.data().handle,
+            sender: snapshot.data().handle,
             type: "comment",
             read: false,
             postId: doc.id,
@@ -121,7 +121,7 @@ exports.onUserImageChange = functions
       let batch = db.batch();
       return db
         .collection("posts")
-        .where("userName", "==", change.before.data().userName)
+        .where("handle", "==", change.before.data().handle)
         .get()
         .then((data) => {
           data.forEach((doc) => {
@@ -174,13 +174,13 @@ exports.onPostDelete = functions
 
 exports.onUserDelete = functions
   .region("us-central1")
-  .firestore.document("/users/{userName}")
+  .firestore.document("/users/{handle}")
   .onDelete((snapshot, context) => {
-    const userName = context.params.userName;
+    const handle = context.params.handle;
     const batch = db.batch();
     return db
       .collection("posts")
-      .where("userName", "==", userName)
+      .where("handle", "==", handle)
       .get()
       .then((data) => {
         data.forEach((post) => {

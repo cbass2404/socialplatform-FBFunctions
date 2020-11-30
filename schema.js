@@ -3,9 +3,9 @@ let db = {
     {
       userId: "string",
       email: "string, email format",
-      userName: "string",
+      handle: "string",
       createdAt: "string, new date to iso",
-      imageUrl: "userName/image/imageId",
+      imageUrl: "handle/image/imageId",
       bio: "string",
       website: "string, web address",
       location: "string, city state",
@@ -13,7 +13,7 @@ let db = {
   ],
   posts: [
     {
-      userName: "string",
+      handle: "string",
       body: "string",
       createdAt: "string, new date to iso",
       likeCount: 0,
@@ -22,7 +22,7 @@ let db = {
   ],
   comments: [
     {
-      userName: "string",
+      handle: "string",
       postId: "string",
       body: "string",
       createdAt: "string, new date to iso",
@@ -30,8 +30,8 @@ let db = {
   ],
   notifications: [
     {
-      recipient: "string, receiving userName",
-      sender: "string, senders userName",
+      recipient: "string, receiving handle",
+      sender: "string, senders handle",
       read: "boolean, true or false",
       postId: "string",
       type: "string, like or comment",
@@ -45,20 +45,20 @@ const userDetails = {
   credentials: {
     userId: "string",
     email: "string, email format",
-    userName: "string, userName",
+    handle: "string, handle",
     createdAt: "string, new date to iso",
-    imageUrl: "userName/image/imageId",
+    imageUrl: "handle/image/imageId",
     bio: "string",
     website: "string, email format",
     location: "string, city,state",
   },
   likes: [
     {
-      userName: "string",
+      handle: "string",
       postId: "string",
     },
     {
-      userName: "string",
+      handle: "string",
       postId: "string",
     },
   ],

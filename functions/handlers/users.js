@@ -17,7 +17,7 @@ exports.signup = (req, res) => {
     email: req.body.email,
     password: req.body.password,
     confirmPassword: req.body.confirmPassword,
-    userName: req.body.userName,
+    handle: req.body.handle,
   };
 
   const { valid, errors } = validateSignupData(newUser);
@@ -26,12 +26,16 @@ exports.signup = (req, res) => {
 
   !valid && res.status(400).json(errors);
 
-  db.doc(`/users/${newUser.userName}`)
+  db.doc(`/users/${newUser.handle}`)
     .get()
     .then((doc) => {
-      doc.exists
-        ? res.status(400).json({ userName: "Username already in use." })
-        : firebase.auth().createUser(newUser.email, newUser.password);
+      if (doc.exists) {
+        return res.status(400).json({ handle: "Handle already in use" });
+      } else {
+        return firebase
+          .auth()
+          .createUserWithEmailAndPassword(newUser.email, newUser.password);
+      }
     })
     .then((data) => {
       userId = data.user.uid;
@@ -40,13 +44,13 @@ exports.signup = (req, res) => {
     .then((idToken) => {
       token = idToken;
       const userCredentials = {
-        userName: newUser.userName,
+        handle: newUser.handle,
         email: newUser.email,
         createdAt: new Date().toISOString(),
         imageUrl: `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${defaultImage}?alt=media`,
-        userId,
+        userId: userId,
       };
-      db.doc(`/users/${newUser.userName}`).set(userCredentials);
+      db.doc(`/users/${newUser.handle}`).set(userCredentials);
     })
     .then(() => {
       return res.status(201).json({ token });
@@ -83,21 +87,21 @@ exports.login = (req, res) => {
       console.error(err);
       return res
         .status(403)
-        .json({ general: "Wrong credentials, please try again" });
+        .json({ general: "Wrong credenthials, please try again" });
     });
 };
 
 exports.getUserDetails = (req, res) => {
   let userData = {};
 
-  db.doc(`/users/${req.params.userName}`)
+  db.doc(`/users/${req.params.handle}`)
     .get()
     .then((doc) => {
       if (doc.exists) {
         userData.user = doc.data();
         return db
-          .collection("post")
-          .where("userHandle", "==", req.params.handle)
+          .collection("posts")
+          .where("handle", "==", req.params.handle)
           .orderBy("createdAt", "desc")
           .get();
       } else {
@@ -110,7 +114,7 @@ exports.getUserDetails = (req, res) => {
         userData.posts.push({
           body: doc.data().body,
           createdAt: doc.data().createdAt,
-          userName: doc.data().userName,
+          handle: doc.data().handle,
           imageUrl: doc.data().imageUrl,
           likeCount: doc.data().likeCount,
           commentCount: doc.data().commentCount,
@@ -128,15 +132,16 @@ exports.getUserDetails = (req, res) => {
 exports.getAuthenticatedUser = (req, res) => {
   let userData = {};
 
-  db.doc(`/users/${req.user.userName}`)
+  db.doc(`/users/${req.user.handle}`)
     .get()
     .then((doc) => {
-      doc.exists &&
-        ((userData.credentials = doc.data()),
-        db
+      if (doc.exists) {
+        userData.credentials = doc.data();
+        return db
           .collection("likes")
-          .where("userName", "==", req.user.userName)
-          .get());
+          .where("handle", "==", req.user.handle)
+          .get();
+      }
     })
     .then((data) => {
       userData.likes = [];
@@ -147,7 +152,7 @@ exports.getAuthenticatedUser = (req, res) => {
 
       return db
         .collection("notifications")
-        .where("recipient", "==", req.user.userName)
+        .where("recipient", "==", req.user.handle)
         .orderBy("createdAt", "desc")
         .limit(10)
         .get();
@@ -176,11 +181,11 @@ exports.getAuthenticatedUser = (req, res) => {
 
 exports.addUserDetails = (req, res) => {
   let userDetails = reduceUserDetails(req.body);
-
-  db.doc(`/users/${req.user.userName}`)
+  console.log("USERDATA", req.user);
+  db.doc(`/users/${req.user.handle}`)
     .update(userDetails)
     .then(() => {
-      return res.json({ message: "Details added" });
+      return res.json({ message: "Details added successfully" });
     })
     .catch((err) => {
       console.error(err);
@@ -228,7 +233,7 @@ exports.uploadImage = (req, res) => {
       })
       .then(() => {
         const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageFileName}?alt=media&token=${generatedToken}`;
-        return db.doc(`/users/${req.user.userName}`).update({ imageUrl });
+        return db.doc(`/users/${req.user.handle}`).update({ imageUrl });
       })
       .then(() => {
         return res.json({ message: "Image uploaded." });
@@ -259,12 +264,12 @@ exports.markNotificationsRead = (req, res) => {
 };
 
 exports.deleteUser = (req, res) => {
-  const document = db.doc(`/user/${req.params.userName}`);
+  const document = db.doc(`/user/${req.params.handle}`);
   document
     .get()
     .then((doc) => {
       !doc.exists && res.status(404).json({ error: "User not found" });
-      doc.data().userName !== req.user.userName
+      doc.data().handle !== req.user.handle
         ? res.status(403).json({ error: "Unauthorized" })
         : document.delete();
     })

@@ -6,7 +6,7 @@ exports.newPost = (req, res) => {
 
   const newPost = {
     body: req.body.body,
-    userName: req.user.userName,
+    handle: req.user.handle,
     imageUrl: req.user.imageUrl,
     createdAt: new Date().toISOString(),
     likeCount: 0,
@@ -64,7 +64,7 @@ exports.getPosts = (req, res) => {
         posts.push({
           postId: doc.id,
           body: doc.data().body,
-          userName: doc.data().userName,
+          handle: doc.data().handle,
           createdAt: doc.data().createdAt,
           commentCount: doc.data().commentCount,
           likeCount: doc.data().likeCount,
@@ -87,7 +87,7 @@ exports.commentOnPost = (req, res) => {
     body: req.body.body,
     createdAt: new Date().toISOString(),
     postId: req.params.postId,
-    userName: req.user.userName,
+    handle: req.user.handle,
     imageUrl: req.user.imageUrl,
   };
 
@@ -113,7 +113,7 @@ exports.commentOnPost = (req, res) => {
 exports.likePost = (req, res) => {
   const likeDocument = db
     .collection("likes")
-    .where("userName", "==", req.user.userName)
+    .where("handle", "==", req.user.handle)
     .where("postId", "==", req.params.postId)
     .limit(1);
 
@@ -138,7 +138,7 @@ exports.likePost = (req, res) => {
           .collection("likes")
           .add({
             postId: req.params.postId,
-            userName: req.user.userName,
+            handle: req.user.handle,
           })
           .then(() => {
             postData.likeCount++;
@@ -160,7 +160,7 @@ exports.likePost = (req, res) => {
 exports.unlikePost = (req, res) => {
   const likeDocument = db
     .collection("likes")
-    .where("userName", "==", req.user.userName)
+    .where("handle", "==", req.user.handle)
     .where("postId", "==", req.params.postId)
     .limit(1);
 
@@ -208,7 +208,7 @@ exports.editPost = (req, res) => {
     .then((doc) => {
       !doc.exists && res.status(404).json({ error: "Post not found" });
 
-      doc.data().userName !== req.user.userName
+      doc.data().handle !== req.user.handle
         ? res.status(403).json({ error: "Unauthorized" })
         : document.update({ body: req.body.body });
     })
@@ -228,7 +228,7 @@ exports.deletePost = (req, res) => {
     .then((doc) => {
       !doc.exists && res.status(404).json({ error: "Post not found" });
 
-      doc.data().userName !== req.user.userName
+      doc.data().handle !== req.user.handle
         ? res.status(403).json({ error: "Unauthorized" })
         : document.delete();
     })
@@ -251,7 +251,7 @@ exports.editComment = (req, res) => {
     .then((doc) => {
       !doc.exists && res.status(404).json({ error: "Comment not found" });
 
-      doc.data().userName !== req.user.userName
+      doc.data().handle !== req.user.handle
         ? res.status(403).json({ error: "Unauthorized" })
         : document.update({ body: req.body.body });
     })
@@ -271,7 +271,7 @@ exports.deleteComment = (req, res) => {
     .then((doc) => {
       !doc.exists && res.status(404).json({ error: "Comment not found" });
 
-      doc.data().userName !== req.user.userName
+      doc.data().handle !== req.user.handle
         ? res.status(403).json({ error: "Unauthorized" })
         : document.delete();
     })
