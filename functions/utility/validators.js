@@ -12,10 +12,11 @@ exports.validateSignupData = (data) => {
 
   isEmpty(data.email)
     ? (errors.email = "")
-    : (errors.email = "Not a valid email address.");
+    : !isEmailFormat && (errors.email = "Not a valid email address.");
   isEmpty(data.password) && (errors.password = "Enter a password");
   data.password !== data.confirmPassword &&
     (errors.confirmPassword = "Passwords must match");
+
   isEmpty(data.userName) && (errors.userName = "Must not be empty");
 
   return {
