@@ -10,6 +10,17 @@ app.use(cors());
 const { db } = require("./utility/admin");
 
 const {
+  signup,
+  login,
+  uploadImage,
+  addUserDetails,
+  getAuthenticatedUser,
+  getUserDetails,
+  markNotificationsRead,
+  deleteUser,
+} = require("./handlers/users");
+
+const {
   newPost,
   getPost,
   getPosts,
@@ -22,17 +33,15 @@ const {
   deleteComment,
 } = require("./handlers/status");
 
-const {
-  signup,
-  login,
-  uploadImage,
-  addUserDetails,
-  getAuthenticatedUser,
-  getUserDetails,
-  markNotificationsRead,
-} = require("./handlers/users");
+app.post("/signup", signup);
+app.post("/login", login);
+app.get("/user/:userName", getUserDetails);
+app.get("/user", FBAuth, getAuthenticatedUser);
+app.post("/user", FBAuth, addUserDetails);
+app.post("/user/image", FBAuth, uploadImage);
+app.post("/notifications", FBAuth, markNotificationsRead);
+app.delete("/user/:userName", FBAuth, deleteUser);
 
-// Status Routes
 app.post("/posts", FBAuth, newPost);
 app.get("/posts/:postId", getPost);
 app.get("/posts", getPosts);
@@ -43,14 +52,5 @@ app.delete("/posts/:postId", FBAuth, deletePost);
 app.put("/posts/:postId", editPost);
 app.put("/posts/:postId/:commentId", editComment);
 app.delete("/posts/:postId/:commentId", deleteComment);
-
-// User Routes
-app.post("/signup", signup);
-app.post("/login", login);
-app.post("/user/image", FBAuth, uploadImage);
-app.post("/user", FBAuth, addUserDetails);
-app.get("/user", FBAuth, getAuthenticatedUser);
-app.get("/user/:userName", getUserDetails);
-app.post("/notifications", FBAuth, markNotificationsRead);
 
 exports.api = functions.region("us-central1").https.onRequest(app);
