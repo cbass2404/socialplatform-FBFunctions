@@ -221,6 +221,29 @@ exports.deletePost = (req, res) => {
     });
 };
 
+exports.editComment = (req, res) => {
+  req.body.body.trim() === "" &&
+    res.status(400).json({ comment: "Must not be empty" });
+
+  const document = db.doc(`/posts/${req.params.postId}`);
+  document
+    .get()
+    .then((doc) => {
+      !doc.exists && res.status(404).json({ error: "Post not found" });
+
+      doc.data().userName !== req.user.userName
+        ? res.status(403).json({ error: "Unauthorized" })
+        : document.update({ body: req.body.body });
+    })
+    .then(() => {
+      res.json({ message: "Post updated successfully" });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
+
 exports.deleteComment = (req, res) => {
   const document = db.doc(`/posts/${req.params.postId}`);
   document
