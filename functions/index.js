@@ -27,8 +27,8 @@ const {
   commentOnPost,
   likePost,
   unlikePost,
-  deletePost,
   editPost,
+  deletePost,
   editComment,
   deleteComment,
 } = require("./handlers/posts");
@@ -48,8 +48,8 @@ app.get("/posts", getPosts);
 app.post("/posts/:postId/comment", FBAuth, commentOnPost);
 app.get("/posts/:postId/like", FBAuth, likePost);
 app.get("/posts/:postId/unlike", FBAuth, unlikePost);
-app.delete("/posts/:postId", FBAuth, deletePost);
 app.put("/posts/:postId", editPost);
+app.delete("/posts/:postId", FBAuth, deletePost);
 app.put("/posts/:postId/:commentId", editComment);
 app.delete("/posts/:postId/:commentId", deleteComment);
 

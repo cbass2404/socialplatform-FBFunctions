@@ -200,3 +200,43 @@ exports.unlikePost = (req, res) => {
       res.status(500).json({ error: err.code });
     });
 };
+
+exports.deletePost = (req, res) => {
+  const document = db.doc(`/posts/${req.params.postId}`);
+  document
+    .get()
+    .then((doc) => {
+      !doc.exists && res.status(404).json({ error: "Post not found" });
+
+      doc.data().userName !== req.user.userName
+        ? res.status(403).json({ error: "Unauthorized" })
+        : document.delete();
+    })
+    .then(() => {
+      res.json({ message: "Post deleted successfully" });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
+
+exports.deleteComment = (req, res) => {
+  const document = db.doc(`/posts/${req.params.postId}`);
+  document
+    .get()
+    .then((doc) => {
+      !doc.exists && res.status(404).json({ error: "Post not found" });
+
+      doc.data().userName !== req.user.userName
+        ? res.status(403).json({ error: "Unauthorized" })
+        : document.delete();
+    })
+    .then(() => {
+      res.json({ message: "Post deleted successfully" });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
