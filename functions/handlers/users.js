@@ -205,7 +205,6 @@ exports.uploadImage = (req, res) => {
   let generatedToken = uuid();
 
   busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-    console.log(fieldname, file, filename, encoding, mimetype);
     mimetype !== "image/jpeg" &&
       mimetype !== "image/png" &&
       res.status(400).json({ error: "Wrong file type submitted" });

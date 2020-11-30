@@ -34,15 +34,15 @@ const {
 app.post("/signup", signup);
 app.post("/login", login);
 app.get("/user/:handle", getUserDetails);
-app.get("/user", FBAuth, getAuthenticatedUser); // START CHECK HERE
+app.get("/user", FBAuth, getAuthenticatedUser);
 app.post("/user", FBAuth, addUserDetails);
 app.post("/user/image", FBAuth, uploadImage);
 app.post("/notifications", FBAuth, markNotificationsRead);
 app.delete("/user", FBAuth, deleteUser);
 
 app.post("/posts", FBAuth, newPost);
-app.get("/posts", getPosts);
 app.get("/posts/:postId", getPost);
+app.get("/posts", getPosts);
 app.patch("/posts/:postId", FBAuth, editPost);
 app.delete("/posts/:postId", FBAuth, deletePost);
 app.get("/posts/:postId/like", FBAuth, likePost);

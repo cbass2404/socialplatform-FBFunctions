@@ -31,7 +31,7 @@ exports.getPost = (req, res) => {
   db.doc(`/posts/${req.params.postId}`)
     .get()
     .then((doc) => {
-      !doc.exists && res.status(404).json({ error: "Post not found" });
+      if (!doc.exists) return res.status(404).json({ error: "Post not found" });
 
       post = doc.data();
       post.postId = doc.id;
@@ -79,34 +79,43 @@ exports.getPosts = (req, res) => {
     });
 };
 
-exports.commentOnPost = (req, res) => {
-  req.body.body.trim() === "" &&
-    res.status(400).json({ comment: "Must not be empty" });
-
-  const newComment = {
-    body: req.body.body,
-    createdAt: new Date().toISOString(),
-    postId: req.params.postId,
-    handle: req.user.handle,
-    imageUrl: req.user.imageUrl,
-  };
-
-  db.doc(`/posts/${req.params.postId}`)
+exports.editPost = (req, res) => {
+  const document = db.doc(`/posts/${req.params.postId}`);
+  document
     .get()
     .then((doc) => {
-      !doc.exists && res.status(404).json({ error: "Status not found" });
+      if (!doc.exists) return res.status(404).json({ error: "Post not found" });
 
-      return doc.ref.update({ commentCount: doc.data().commentCount + 1 });
+      if (doc.data().handle !== req.user.handle) {
+        res.status(403).json({ error: "Unauthorized" });
+      } else return document.update({ body: req.body.body });
     })
     .then(() => {
-      return db.collection("comments").add(newComment);
-    })
-    .then(() => {
-      res.json(newComment);
+      res.json({ message: "Post updated successfully" });
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).json({ error: "Something went wrong" });
+      return res.status(500).json({ error: err.code });
+    });
+};
+
+exports.deletePost = (req, res) => {
+  const document = db.doc(`/posts/${req.params.postId}`);
+  document
+    .get()
+    .then((doc) => {
+      if (!doc.exists) return res.status(404).json({ error: "Post not found" });
+
+      if (doc.data().handle !== req.user.handle) {
+        res.status(403).json({ error: "Unauthorized" });
+      } else return document.delete();
+    })
+    .then(() => {
+      res.json({ message: "Post deleted successfully" });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
     });
 };
 
@@ -201,43 +210,35 @@ exports.unlikePost = (req, res) => {
     });
 };
 
-exports.editPost = (req, res) => {
-  const document = db.doc(`/posts/${req.params.postId}`);
-  document
+exports.commentOnPost = (req, res) => {
+  if (req.body.body.trim() === "")
+    return res.status(400).json({ comment: "Must not be empty" });
+
+  const newComment = {
+    body: req.body.body,
+    createdAt: new Date().toISOString(),
+    postId: req.params.postId,
+    handle: req.user.handle,
+    imageUrl: req.user.imageUrl,
+  };
+
+  db.doc(`/posts/${req.params.postId}`)
     .get()
     .then((doc) => {
-      !doc.exists && res.status(404).json({ error: "Post not found" });
+      if (!doc.exists)
+        return res.status(404).json({ error: "Status not found" });
 
-      doc.data().handle !== req.user.handle
-        ? res.status(403).json({ error: "Unauthorized" })
-        : document.update({ body: req.body.body });
+      return doc.ref.update({ commentCount: doc.data().commentCount + 1 });
     })
     .then(() => {
-      res.json({ message: "Post updated successfully" });
+      return db.collection("comments").add(newComment);
+    })
+    .then(() => {
+      res.json(newComment);
     })
     .catch((err) => {
       console.error(err);
-      return res.status(500).json({ error: err.code });
-    });
-};
-
-exports.deletePost = (req, res) => {
-  const document = db.doc(`/posts/${req.params.postId}`);
-  document
-    .get()
-    .then((doc) => {
-      !doc.exists && res.status(404).json({ error: "Post not found" });
-
-      doc.data().handle !== req.user.handle
-        ? res.status(403).json({ error: "Unauthorized" })
-        : document.delete();
-    })
-    .then(() => {
-      res.json({ message: "Post deleted successfully" });
-    })
-    .catch((err) => {
-      console.error(err);
-      return res.status(500).json({ error: err.code });
+      res.status(500).json({ error: "Something went wrong" });
     });
 };
 
@@ -269,11 +270,12 @@ exports.deleteComment = (req, res) => {
   document
     .get()
     .then((doc) => {
-      !doc.exists && res.status(404).json({ error: "Comment not found" });
+      if (!doc.exists)
+        return res.status(404).json({ error: "Comment not found" });
 
-      doc.data().handle !== req.user.handle
-        ? res.status(403).json({ error: "Unauthorized" })
-        : document.delete();
+      if (doc.data().handle !== req.user.handle) {
+        res.status(403).json({ error: "Unauthorized" });
+      } else return document.delete();
     })
     .then(() => {
       res.json({ message: "Comment deleted successfully" });
