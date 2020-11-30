@@ -43,13 +43,13 @@ app.post("/notifications", FBAuth, markNotificationsRead);
 app.delete("/user/:userName", FBAuth, deleteUser);
 
 app.post("/posts", FBAuth, newPost);
-app.get("/posts/:postId", getPost);
 app.get("/posts", getPosts);
-app.post("/posts/:postId/comment", FBAuth, commentOnPost);
-app.get("/posts/:postId/like", FBAuth, likePost);
-app.get("/posts/:postId/unlike", FBAuth, unlikePost);
+app.get("/posts/:postId", getPost);
 app.patch("/posts/:postId", FBAuth, editPost);
 app.delete("/posts/:postId", FBAuth, deletePost);
+app.get("/posts/:postId/like", FBAuth, likePost);
+app.get("/posts/:postId/unlike", FBAuth, unlikePost);
+app.post("/posts/:postId/comment", FBAuth, commentOnPost);
 app.patch("/posts/:postId/:commentId", FBAuth, editComment);
 app.delete("/posts/:postId/:commentId", FBAuth, deleteComment);
 

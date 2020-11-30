@@ -201,6 +201,26 @@ exports.unlikePost = (req, res) => {
     });
 };
 
+exports.editPost = (req, res) => {
+  const document = db.doc(`/posts/${req.params.postId}`);
+  document
+    .get()
+    .then((doc) => {
+      !doc.exists && res.status(404).json({ error: "Post not found" });
+
+      doc.data().userName !== req.user.userName
+        ? res.status(403).json({ error: "Unauthorized" })
+        : document.update({ body: req.body.body });
+    })
+    .then(() => {
+      res.json({ message: "Post updated successfully" });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
+
 exports.deletePost = (req, res) => {
   const document = db.doc(`/posts/${req.params.postId}`);
   document
@@ -225,18 +245,20 @@ exports.editComment = (req, res) => {
   req.body.body.trim() === "" &&
     res.status(400).json({ comment: "Must not be empty" });
 
-  const document = db.doc(`/posts/${req.params.postId}`);
+  const document = db.doc(
+    `/posts/${req.params.postId}/${req.params.commentId}`
+  );
   document
     .get()
     .then((doc) => {
-      !doc.exists && res.status(404).json({ error: "Post not found" });
+      !doc.exists && res.status(404).json({ error: "Comment not found" });
 
       doc.data().userName !== req.user.userName
         ? res.status(403).json({ error: "Unauthorized" })
         : document.update({ body: req.body.body });
     })
     .then(() => {
-      res.json({ message: "Post updated successfully" });
+      res.json({ message: "Comment updated successfully" });
     })
     .catch((err) => {
       console.error(err);
@@ -245,18 +267,20 @@ exports.editComment = (req, res) => {
 };
 
 exports.deleteComment = (req, res) => {
-  const document = db.doc(`/posts/${req.params.postId}`);
+  const document = db.doc(
+    `/posts/${req.params.postId}/${req.params.commentId}`
+  );
   document
     .get()
     .then((doc) => {
-      !doc.exists && res.status(404).json({ error: "Post not found" });
+      !doc.exists && res.status(404).json({ error: "Comment not found" });
 
       doc.data().userName !== req.user.userName
         ? res.status(403).json({ error: "Unauthorized" })
         : document.delete();
     })
     .then(() => {
-      res.json({ message: "Post deleted successfully" });
+      res.json({ message: "Comment deleted successfully" });
     })
     .catch((err) => {
       console.error(err);
