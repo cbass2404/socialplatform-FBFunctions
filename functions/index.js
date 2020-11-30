@@ -38,7 +38,7 @@ app.get("/user", FBAuth, getAuthenticatedUser); // START CHECK HERE
 app.post("/user", FBAuth, addUserDetails);
 app.post("/user/image", FBAuth, uploadImage);
 app.post("/notifications", FBAuth, markNotificationsRead);
-app.delete("/user/:handle", FBAuth, deleteUser);
+app.delete("/user", FBAuth, deleteUser);
 
 app.post("/posts", FBAuth, newPost);
 app.get("/posts", getPosts);

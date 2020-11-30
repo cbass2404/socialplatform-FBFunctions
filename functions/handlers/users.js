@@ -181,7 +181,6 @@ exports.getAuthenticatedUser = (req, res) => {
 
 exports.addUserDetails = (req, res) => {
   let userDetails = reduceUserDetails(req.body);
-  console.log("USERDATA", req.user);
   db.doc(`/users/${req.user.handle}`)
     .update(userDetails)
     .then(() => {
@@ -232,7 +231,7 @@ exports.uploadImage = (req, res) => {
         },
       })
       .then(() => {
-        const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageFileName}?alt=media&token=${generatedToken}`;
+        const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageName}?alt=media&token=${generatedToken}`;
         return db.doc(`/users/${req.user.handle}`).update({ imageUrl });
       })
       .then(() => {
@@ -264,16 +263,29 @@ exports.markNotificationsRead = (req, res) => {
 };
 
 exports.deleteUser = (req, res) => {
-  const document = db.doc(`/user/${req.params.handle}`);
-  document
+  const user = firebase.auth().currentUser;
+  const userDoc = db.doc(`/users/${req.user.handle}`);
+
+  userDoc
     .get()
     .then((doc) => {
-      !doc.exists && res.status(404).json({ error: "User not found" });
-      doc.data().handle !== req.user.handle
-        ? res.status(403).json({ error: "Unauthorized" })
-        : document.delete();
+      if (!doc.exists) return res.status(404).json({ error: "User not found" });
+      if (doc.data().handle !== req.user.handle) {
+        return res.status(403).json({ error: "Unauthorized" });
+      } else {
+        userDoc.delete();
+
+        user
+          .delete()
+          .then((res) => {
+            res.json();
+          })
+          .catch((err) => {
+            return res.status(500).json({ error: err.code });
+          });
+      }
     })
-    .then(() => {
+    .then((res) => {
       res.json({ message: "User deleted successfully" });
     })
     .catch((err) => {
