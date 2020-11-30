@@ -78,3 +78,34 @@ exports.getPosts = (req, res) => {
       res.status(500).json({ error: err.code });
     });
 };
+
+exports.commentOnPost = (req, res) => {
+  req.body.body.trim() === "" &&
+    res.status(400).json({ comment: "Must not be empty" });
+
+  const newComment = {
+    body: req.body.body,
+    createdAt: new Date().toISOString(),
+    postId: req.params.postId,
+    userName: req.user.userName,
+    imageUrl: req.user.imageUrl,
+  };
+
+  db.doc(`/posts/${req.params.postId}`)
+    .get()
+    .then((doc) => {
+      !doc.exists && res.status(404).json({ error: "Status not found" });
+
+      return doc.ref.update({ commentCount: doc.data().commentCount + 1 });
+    })
+    .then(() => {
+      return db.collection("comments").add(newComment);
+    })
+    .then(() => {
+      res.json(newComment);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: "Something went wrong" });
+    });
+};
