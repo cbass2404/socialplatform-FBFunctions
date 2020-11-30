@@ -240,3 +240,39 @@ exports.uploadImage = (req, res) => {
   });
   busboy.end(req.rawBody);
 };
+
+exports.markNotificationsRead = (req, res) => {
+  let batch = db.batch();
+  req.body.forEach((notificationId) => {
+    const notification = db.doc(`/notifications/${notificationId}`);
+    batch.update(notification, { read: true });
+  });
+  batch
+    .commit()
+    .then(() => {
+      return res.json({ message: "Notifications marked read" });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
+
+exports.deleteUser = (req, res) => {
+  const document = db.doc(`/user/${req.params.userName}`);
+  document
+    .get()
+    .then((doc) => {
+      !doc.exists && res.status(404).json({ error: "User not found" });
+      doc.data().userName !== req.user.userName
+        ? res.status(403).json({ error: "Unauthorized" })
+        : document.delete();
+    })
+    .then(() => {
+      res.json({ message: "User deleted successfully" });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
