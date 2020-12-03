@@ -129,9 +129,6 @@ exports.onUserImageChange = functions
             batch.update(post, { imageUrl: change.after.data().imageUrl });
           });
           return batch.commit();
-        })
-        .then(() => {
-          change.before.data().imageUrl.delete();
         });
     } else return true;
   });
@@ -183,8 +180,20 @@ exports.onUserDelete = functions
       .where("handle", "==", handle)
       .get()
       .then((data) => {
-        data.forEach((post) => {
-          batch.delete(db.doc(`/posts/${post.postId}`));
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/posts/${doc.id}`));
+        });
+        return db.collection("likes").where("handle", "==", handle).get();
+      })
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/likes/${doc.id}`));
+        });
+        return db.collection("comments").where("handle", "==", handle).get();
+      })
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/comments/${doc.id}`));
         });
         return batch.commit();
       })

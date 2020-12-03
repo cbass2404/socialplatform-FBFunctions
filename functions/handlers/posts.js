@@ -1,8 +1,9 @@
 const { db } = require("../utility/admin");
 
 exports.newPost = (req, res) => {
-  req.body.body.trim() === "" &&
-    res.status(400).json({ body: "Content required" });
+  if (req.body.body.trim() === "") {
+    return res.status(400).json({ body: "Body must not be empty" });
+  }
 
   const newPost = {
     body: req.body.body,
